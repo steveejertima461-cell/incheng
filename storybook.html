@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f7dce8">
+    <title>Diane's Album | A Little Storybook</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #57243a;
+            --berry: #9b315b;
+            --rose: #d65b88;
+            --pink: #f4b8cd;
+            --paper: #fffaf3;
+            --page-turn: 780ms;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            overflow-x: hidden;
+            padding: 28px;
+            color: var(--ink);
+            font-family: Georgia, "Times New Roman", serif;
+            background:
+                radial-gradient(ellipse at 16% 12%, rgba(255, 255, 255, 0.8), transparent 34%),
+                radial-gradient(ellipse at 88% 86%, rgba(244, 184, 205, 0.58), transparent 38%),
+                linear-gradient(135deg, #fceaf1, #f5d5e2 54%, #f9e7ed);
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .scene {
+            width: min(100%, 1000px);
+            perspective: 1800px;
+        }
+
+        .book {
+            position: relative;
+            width: min(100%, 460px);
+            height: min(650px, 76vh);
+            min-height: 460px;
+            margin: auto;
+            transform-style: preserve-3d;
+            transition: width 700ms cubic-bezier(0.2, 0.75, 0.25, 1);
+            filter: drop-shadow(0 28px 30px rgba(92, 34, 59, 0.22));
+        }
+
+        .book.is-open {
+            width: min(100%, 920px);
+        }
+
+        .spread {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            border: 1px solid #dec3c8;
+            border-radius: 10px 16px 16px 10px;
+            background: var(--paper);
+            opacity: 0;
+            transform: scale(0.94);
+            transition: opacity 350ms ease 220ms, transform 650ms cubic-bezier(0.2, 0.75, 0.25, 1);
+        }
+
+        .book.is-open .spread {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .page {
+            position: relative;
+            min-width: 0;
+            overflow: hidden;
+            background:
+                repeating-linear-gradient(to bottom, transparent 0 35px, rgba(172, 127, 137, 0.09) 35px 36px),
+                linear-gradient(100deg, #fffdf9, var(--paper) 72%, #f9f0e9);
+        }
+
+        .left-page {
+            display: flex;
+            flex-direction: column;
+            padding: clamp(22px, 4vw, 48px);
+            border-right: 1px solid #ddc9c7;
+            box-shadow: inset -18px 0 22px -22px rgba(82, 40, 52, 0.6);
+        }
+
+        .page-topline {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+            color: #a27681;
+            font: 600 11px/1.2 Arial, sans-serif;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .photo-frame {
+            position: relative;
+            display: grid;
+            flex: 1;
+            min-height: 0;
+            place-items: center;
+            overflow: hidden;
+            padding: 12px;
+            border: 1px solid #ead9d1;
+            border-radius: 5px;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(103, 57, 67, 0.12);
+        }
+
+        .photo-frame::after {
+            position: absolute;
+            inset: 7px;
+            border: 1px solid rgba(218, 173, 179, 0.34);
+            content: "";
+            pointer-events: none;
+        }
+
+        .photo-frame img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            object-fit: contain;
+            transform: translate3d(var(--photo-x, 0px), var(--photo-y, 0px), 0) scale(var(--photo-scale, 1));
+            transition: transform 400ms ease;
+            will-change: transform;
+        }
+
+        .left-page h2 {
+            margin: 17px 0 5px;
+            color: var(--berry);
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .left-page .caption {
+            margin: 0;
+            color: #765461;
+            font-size: clamp(13px, 1.7vw, 16px);
+            font-style: italic;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .right-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(24px, 5vw, 60px);
+            background:
+                radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.75), transparent 55%),
+                repeating-linear-gradient(to bottom, transparent 0 35px, rgba(172, 127, 137, 0.09) 35px 36px),
+                linear-gradient(110deg, #f8eee8, #fffaf3 25%, #fffaf3);
+            text-align: center;
+        }
+
+        .right-page::before {
+            position: absolute;
+            top: 25px;
+            bottom: 25px;
+            left: 0;
+            width: 1px;
+            background: linear-gradient(transparent, rgba(139, 87, 101, 0.2), transparent);
+            content: "";
+        }
+
+        .right-ornament {
+            margin-bottom: 18px;
+            color: var(--rose);
+            font-size: clamp(28px, 5vw, 42px);
+        }
+
+        .right-page h2 {
+            margin: 0;
+            color: var(--berry);
+            font-size: clamp(22px, 3.6vw, 34px);
+            font-weight: 500;
+        }
+
+        .right-page p {
+            max-width: 310px;
+            color: #80616b;
+            font-size: clamp(14px, 1.7vw, 17px);
+            font-style: italic;
+            line-height: 1.8;
+        }
+
+        .right-page .page-number {
+            position: absolute;
+            right: 26px;
+            bottom: 22px;
+            color: #a27681;
+            font: 12px Arial, sans-serif;
+        }
+
+        .next-button,
+        .close-button,
+        .open-button {
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 999px;
+            background: linear-gradient(135deg, #d65b88, #a93462);
+            color: white;
+            box-shadow: 0 8px 20px rgba(132, 44, 81, 0.22);
+            cursor: pointer;
+            font: 700 13px Arial, sans-serif;
+            letter-spacing: 0.09em;
+            transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+        }
+
+        .next-button,
+        .close-button {
+            position: absolute;
+            right: clamp(18px, 4vw, 42px);
+            bottom: clamp(22px, 4vw, 42px);
+            padding: 13px 22px;
+        }
+
+        .next-button:hover,
+        .close-button:hover,
+        .open-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(132, 44, 81, 0.3);
+        }
+
+        .next-button:focus-visible,
+        .close-button:focus-visible,
+        .open-button:focus-visible {
+            outline: 3px solid #f1a9c2;
+            outline-offset: 4px;
+        }
+
+        .book-cover {
+            position: absolute;
+            z-index: 4;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 1px solid #e5a1b9;
+            border-left: 14px solid #a93462;
+            width: 100%;
+            border-radius: 8px 18px 18px 8px;
+            background:
+                radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.2), transparent 38%),
+                linear-gradient(145deg, #ed8eb0, #d65b88 58%, #a93462);
+            box-shadow: inset 10px 0 18px rgba(85, 20, 48, 0.22), inset 0 0 0 9px rgba(255, 255, 255, 0.12);
+            color: #fffafc;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            transition: width 700ms cubic-bezier(0.2, 0.75, 0.25, 1), transform 1s cubic-bezier(0.62, 0.04, 0.26, 1), visibility 0s linear 1s;
+        }
+
+        .book-cover::before {
+            position: absolute;
+            inset: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.48);
+            border-radius: 4px 13px 13px 4px;
+            content: "";
+            pointer-events: none;
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 28px;
+            text-align: center;
+        }
+
+        .cover-decoration {
+            margin-bottom: 18px;
+            font-size: 42px;
+        }
+
+        .cover-kicker {
+            margin-bottom: 10px;
+            color: #fff1f6;
+            font: 700 11px Arial, sans-serif;
+            letter-spacing: 0.2em;
+        }
+
+        .book-cover h1 {
+            margin: 0;
+            color: #fff;
+            font-size: clamp(34px, 6vw, 54px);
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-shadow: 0 4px 14px rgba(85, 20, 48, 0.25);
+        }
+
+        .cover-subtitle {
+            margin: 12px 0 26px;
+            color: #fff7fa;
+            font-size: 15px;
+            font-style: italic;
+        }
+
+        .open-button {
+            padding: 15px 27px;
+            background: #fffafc;
+            color: var(--berry);
+        }
+
+        .open-button:hover {
+            background: #fff0f6;
+        }
+
+        .book.is-open .book-cover {
+            width: 50%;
+            visibility: hidden;
+            transform: rotateY(-165deg);
+            pointer-events: none;
+        }
+
+        .turning-leaf {
+            position: absolute;
+            z-index: 3;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 50%;
+            visibility: hidden;
+            transform: rotateY(0);
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            pointer-events: none;
+        }
+
+        .turning-leaf.is-turning {
+            visibility: visible;
+            animation: pagePeel var(--page-turn) cubic-bezier(0.55, 0.05, 0.3, 0.95) forwards;
+        }
+
+        .leaf-face {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 1px solid #dec3c8;
+            border-left: 0;
+            background:
+                repeating-linear-gradient(to bottom, transparent 0 35px, rgba(172, 127, 137, 0.09) 35px 36px),
+                linear-gradient(100deg, #fffdf9, #fffaf3);
+            backface-visibility: hidden;
+            box-shadow: 9px 12px 22px rgba(82, 40, 52, 0.2);
+        }
+
+        .leaf-back {
+            transform: rotateY(180deg);
+        }
+
+        .leaf-face img {
+            width: 100%;
+            height: 100%;
+            padding: clamp(18px, 4vw, 42px);
+            object-fit: contain;
+        }
+
+        .book.is-turning .left-page img {
+            animation: underPageReveal var(--page-turn) ease-out both;
+        }
+
+        .book.is-turning .right-page {
+            animation: rightPageShade var(--page-turn) ease-in-out both;
+        }
+
+        .turn-hint {
+            margin: 18px 0 0;
+            color: #8e6b75;
+            font: 12px Arial, sans-serif;
+            letter-spacing: 0.08em;
+            text-align: center;
+        }
+
+        .book.is-closed .spread,
+        .book.is-closed .turning-leaf {
+            pointer-events: none;
+        }
+
+        @keyframes pagePeel {
+            0% { transform: rotateY(0); }
+            48% { filter: brightness(0.92); }
+            100% { transform: rotateY(-180deg); }
+        }
+
+        @keyframes underPageReveal {
+            0% { transform: translateX(12px) scale(0.96); filter: brightness(0.72) blur(2px); }
+            58% { transform: translateX(-3px) scale(1.025); filter: brightness(1.04) blur(0); }
+            100% { transform: translateX(0) scale(1); filter: brightness(1) blur(0); }
+        }
+
+        @keyframes rightPageShade {
+            0%, 100% { filter: brightness(1); }
+            45% { filter: brightness(0.78); }
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 14px;
+            }
+
+            .book {
+                height: min(680px, 84vh);
+                min-height: 480px;
+            }
+
+            .left-page {
+                padding: 18px 12px;
+            }
+
+            .right-page {
+                padding: 18px 12px 70px;
+            }
+
+            .photo-frame {
+                padding: 7px;
+            }
+
+            .page-topline {
+                font-size: 9px;
+                letter-spacing: 0.08em;
+            }
+
+            .next-button,
+            .close-button {
+                right: 10px;
+                bottom: 14px;
+                padding: 12px 13px;
+                font-size: 11px;
+            }
+
+            .right-page .page-number {
+                right: auto;
+                bottom: 20px;
+                left: 13px;
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 390px) {
+            body {
+                padding: 10px;
+            }
+
+            .book {
+                height: min(640px, 82vh);
+                min-height: 440px;
+            }
+
+            .left-page {
+                padding: 14px 8px;
+            }
+
+            .right-page {
+                padding-right: 8px;
+                padding-left: 8px;
+            }
+
+            .page-topline {
+                gap: 4px;
+                font-size: 8px;
+            }
+
+            .left-page h2 {
+                font-size: 17px;
+            }
+
+            .left-page .caption {
+                font-size: 12px;
+            }
+
+            .next-button,
+            .close-button {
+                right: 6px;
+                padding: 11px 9px;
+                letter-spacing: 0.04em;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 1ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 1ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="scene">
+        <div class="book is-closed" id="book" aria-label="Diane's photo album">
+            <div class="spread" aria-live="polite">
+                <section class="page left-page" aria-label="Photo page">
+                    <div class="page-topline">
+                        <span>Our little story</span>
+                        <span id="leftPageCount">01 / 04</span>
+                    </div>
+                    <div class="photo-frame">
+                        <img id="albumPhoto" src="incheng1.jpg" alt="Princess Diane at the beach">
+                    </div>
+                    <h2 id="photoTitle">Beach Vibes</h2>
+                    <p class="caption" id="photoCaption">A sunny memory, kept close.</p>
+                </section>
+
+                <section class="page right-page" aria-label="Story page">
+                    <div class="right-ornament" aria-hidden="true">✿</div>
+                    <h2 id="rightHeading">A little note for you</h2>
+                    <p id="rightMessage">Every lovely story starts with a smile. Turn the page to see a sweet memory.</p>
+                    <span class="page-number" id="rightPageCount">02</span>
+                    <button class="next-button" id="nextButton" type="button">NEXT PAGE →</button>
+                    <button class="close-button" id="closeButton" type="button" hidden>CLOSE ALBUM</button>
+                </section>
+            </div>
+
+            <div class="turning-leaf" id="turningLeaf" aria-hidden="true">
+                <div class="leaf-face leaf-front">
+                    <img id="turningPhotoFront" src="incheng1.jpg" alt="">
+                </div>
+                <div class="leaf-face leaf-back">
+                    <img id="turningPhotoBack" src="incheng1.jpg" alt="">
+                </div>
+            </div>
+
+            <div class="book-cover" id="bookCover">
+                <div class="cover-content">
+                    <div class="cover-decoration" aria-hidden="true">🦔　✿　💖</div>
+                    <div class="cover-kicker">A keepsake made with love</div>
+                    <h1>DIANE'S ALBUM</h1>
+                    <p class="cover-subtitle">A little story of beautiful memories</p>
+                    <button class="open-button" id="openButton" type="button">OPEN ALBUM</button>
+                </div>
+            </div>
+        </div>
+        <p class="turn-hint" id="turnHint">A little book, filled with lovely moments</p>
+    </main>
+
+    <script>
+        const photos = [
+            {
+                src: "incheng1.jpg",
+                alt: "Princess Diane at the beach",
+                title: "Beach Vibes",
+                caption: "A sunny memory, kept close.",
+                message: "Standing by the ocean with the breeze in your hair—you shine brighter than the sunshine on the water. Every beach day is instantly better with you around."
+            },
+            {
+                src: "incheng2.jpg",
+                alt: "Princess Diane smiling in a portrait",
+                title: "Glow Up",
+                caption: "A smile that lights up the whole page.",
+                message: "Every single time I look at this picture, I can't help but fall for your smile all over again. You have this effortless grace that just lights up the whole room."
+            },
+            {
+                src: "incheng3.jpg",
+                alt: "Princess Diane ready for a hike",
+                title: "Adventure Time",
+                caption: "Here is to all the fun adventures ahead.",
+                message: "Rocking those cute sunglasses and ready for any trail! Your energy and love for adventure make every journey together so much fun."
+            },
+            {
+                src: "incheng4.jpg",
+                alt: "Princess Diane outdoors under a blue sky",
+                title: "Sunny Trails",
+                caption: "A beautiful day made even brighter.",
+                message: "Looks like such a perfect day under the blue skies. But if I'm being honest, your happy smile is what really makes this photo so special."
+            }
+        ];
+
+        const book = document.getElementById("book");
+        const openButton = document.getElementById("openButton");
+        const nextButton = document.getElementById("nextButton");
+        const closeButton = document.getElementById("closeButton");
+        const turningLeaf = document.getElementById("turningLeaf");
+        const albumPhoto = document.getElementById("albumPhoto");
+        const photoTitle = document.getElementById("photoTitle");
+        const photoCaption = document.getElementById("photoCaption");
+        const rightHeading = document.getElementById("rightHeading");
+        const rightMessage = document.getElementById("rightMessage");
+        const leftPageCount = document.getElementById("leftPageCount");
+        const rightPageCount = document.getElementById("rightPageCount");
+        const turnHint = document.getElementById("turnHint");
+        let currentIndex = 0;
+        let isTurning = false;
+        let turnTimer;
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const turnDuration = reducedMotion ? 1 : 780;
+        const coverDuration = reducedMotion ? 1 : 1000;
+
+        function updatePage(index) {
+            const photo = photos[index];
+            albumPhoto.src = photo.src;
+            albumPhoto.alt = photo.alt;
+            photoTitle.textContent = photo.title;
+            photoCaption.textContent = photo.caption;
+            leftPageCount.textContent = String(index + 1).padStart(2, "0") + " / 04";
+
+            const isLastPage = index === photos.length - 1;
+            rightHeading.textContent = isLastPage ? "THE END" : "A little note for you";
+            rightMessage.textContent = isLastPage
+                ? "I hope these little memories made you smile. You deserve all the happiness in the world. Thank you for being wonderfully you. 💖"
+                : photo.message;
+            rightPageCount.textContent = isLastPage ? "♥" : String(index + 2).padStart(2, "0");
+            nextButton.hidden = isLastPage;
+            closeButton.hidden = !isLastPage;
+            turnHint.textContent = isLastPage
+                ? "And they lived happily ever after ✿"
+                : "Turn the page for another lovely memory";
+        }
+
+        function openAlbum() {
+            if (book.classList.contains("is-open")) {
+                return;
+            }
+
+            currentIndex = 0;
+            updatePage(currentIndex);
+            book.classList.remove("is-closed");
+            book.classList.add("is-open");
+            openButton.disabled = true;
+            turnHint.textContent = "Our story begins…";
+
+            window.setTimeout(function() {
+                openButton.disabled = false;
+            }, coverDuration);
+        }
+
+        function turnPage() {
+            if (!book.classList.contains("is-open") || isTurning || currentIndex >= photos.length - 1) {
+                return;
+            }
+
+            isTurning = true;
+            nextButton.disabled = true;
+            const nextPhoto = photos[currentIndex + 1];
+            document.getElementById("turningPhotoFront").src = photos[currentIndex].src;
+            document.getElementById("turningPhotoBack").src = nextPhoto.src;
+            turningLeaf.classList.add("is-turning");
+            book.classList.add("is-turning");
+
+            turnTimer = window.setTimeout(function() {
+                currentIndex += 1;
+                updatePage(currentIndex);
+                turningLeaf.classList.remove("is-turning");
+                book.classList.remove("is-turning");
+                nextButton.disabled = false;
+                isTurning = false;
+            }, turnDuration);
+        }
+
+        function closeAlbum() {
+            if (isTurning) {
+                return;
+            }
+
+            window.clearTimeout(turnTimer);
+            book.classList.remove("is-open", "is-turning");
+            book.classList.add("is-closed");
+            turningLeaf.classList.remove("is-turning");
+            currentIndex = 0;
+            turnHint.textContent = "A little book, filled with lovely moments";
+        }
+
+        openButton.addEventListener("click", openAlbum);
+        nextButton.addEventListener("click", turnPage);
+        closeButton.addEventListener("click", closeAlbum);
+
+        book.addEventListener("pointermove", function(event) {
+            if (reducedMotion || isTurning || !book.classList.contains("is-open")) {
+                return;
+            }
+
+            const bounds = book.getBoundingClientRect();
+            const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+            const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+            albumPhoto.style.setProperty("--photo-x", (x * -8).toFixed(1) + "px");
+            albumPhoto.style.setProperty("--photo-y", (y * -6).toFixed(1) + "px");
+            albumPhoto.style.setProperty("--photo-scale", "1.035");
+        });
+
+        book.addEventListener("pointerleave", function() {
+            albumPhoto.style.setProperty("--photo-x", "0px");
+            albumPhoto.style.setProperty("--photo-y", "0px");
+            albumPhoto.style.setProperty("--photo-scale", "1");
+        });
+
+        updatePage(currentIndex);
+    </script>
+</body>
+</html>
